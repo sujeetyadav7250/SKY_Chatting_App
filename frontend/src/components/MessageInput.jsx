@@ -1,11 +1,13 @@
 import { useRef, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
-import { Image, Send, X } from "lucide-react";
+import { Image, Send, Mic, X } from "lucide-react";
 import toast from "react-hot-toast";
+import VoiceRecorder from "./VoiceRecorder";
 
 const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const fileInputRef = useRef(null);
   const { sendMessage } = useChatStore();
 
@@ -47,15 +49,28 @@ const MessageInput = () => {
     }
   };
 
+  const handleSendVoice = async (voiceData, duration) => {
+    try {
+      await sendMessage({
+        voice: voiceData,
+        voiceDuration: duration,
+      });
+      setShowVoiceRecorder(false);
+    } catch (error) {
+      console.error("Failed to send voice message:", error);
+      toast.error("Failed to send voice message");
+    }
+  };
+
   return (
-    <div className="p-4 w-full">
+    <div className="p-2 sm:p-4 w-full">
       {imagePreview && (
         <div className="mb-3 flex items-center gap-2">
           <div className="relative">
             <img
               src={imagePreview}
               alt="Preview"
-              className="w-20 h-20 object-cover rounded-lg border border-zinc-700"
+              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-zinc-700"
             />
             <button
               onClick={removeImage}
@@ -66,6 +81,16 @@ const MessageInput = () => {
               <X className="size-3" />
             </button>
           </div>
+        </div>
+      )}
+
+      {showVoiceRecorder && (
+        <div className="mb-3">
+          <VoiceRecorder 
+            onSendVoice={handleSendVoice}
+            isRecording={showVoiceRecorder}
+            setIsRecording={setShowVoiceRecorder}
+          />
         </div>
       )}
 
@@ -88,19 +113,31 @@ const MessageInput = () => {
 
           <button
             type="button"
-            className={`hidden sm:flex btn btn-circle
+            className={`btn btn-circle btn-sm sm:btn-md
                      ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
             onClick={() => fileInputRef.current?.click()}
+            title="Attach image"
           >
-            <Image size={20} />
+            <Image size={18} className="sm:w-5 sm:h-5" />
+          </button>
+
+          <button
+            type="button"
+            className={`btn btn-circle btn-sm sm:btn-md ${
+              showVoiceRecorder ? "btn-primary" : "btn-ghost"
+            }`}
+            onClick={() => setShowVoiceRecorder(!showVoiceRecorder)}
+            title="Record voice message"
+          >
+            <Mic size={18} className="sm:w-5 sm:h-5" />
           </button>
         </div>
         <button
           type="submit"
-          className="btn btn-sm btn-circle"
+          className="btn btn-sm sm:btn-md btn-circle"
           disabled={!text.trim() && !imagePreview}
         >
-          <Send size={22} />
+          <Send size={18} className="sm:w-5 sm:h-5" />
         </button>
       </form>
     </div>

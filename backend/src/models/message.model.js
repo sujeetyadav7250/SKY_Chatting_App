@@ -18,6 +18,23 @@ const messageSchema = new mongoose.Schema(
     image: {
       type: String,
     },
+    voice: {
+      type: String,
+    },
+    voiceDuration: {
+      type: Number, // Duration in seconds
+    },
+    seen: {
+      type: Boolean,
+      default: false,
+    },
+    seenAt: {
+      type: Date,
+    },
+    deletedFor: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    }],
   },
   { timestamps: true }
 );

@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { LogOut, MessageSquare, Settings, User } from "lucide-react";
+import { LogOut, MessageSquare, Settings, User, Menu, X } from "lucide-react";
+import { useState } from "react";
 
 const Navbar = () => {
   const { logout, authUser } = useAuthStore();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header
@@ -17,37 +19,86 @@ const Navbar = () => {
               <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-primary" />
               </div>
-              <h1 className="text-lg font-bold">YaduvanshiChattingApp</h1>
+              <h1 className="text-lg font-bold hidden sm:block">YaduvanshiChattingApp</h1>
+              <h1 className="text-lg font-bold sm:hidden">ChatApp</h1>
             </Link>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-2">
             <Link
               to={"/settings"}
-              className={`
-              btn btn-sm gap-2 transition-colors
-              
-              `}
+              className="btn btn-sm gap-2 transition-colors"
             >
               <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Settings</span>
+              <span>Settings</span>
             </Link>
 
             {authUser && (
               <>
-                <Link to={"/profile"} className={`btn btn-sm gap-2`}>
+                <Link to={"/profile"} className="btn btn-sm gap-2">
                   <User className="size-5" />
-                  <span className="hidden sm:inline">Profile</span>
+                  <span>Profile</span>
                 </Link>
 
-                <button className="flex gap-2 items-center" onClick={logout}>
+                <button className="btn btn-sm gap-2" onClick={logout}>
                   <LogOut className="size-5" />
-                  <span className="hidden sm:inline">Logout</span>
+                  <span>Logout</span>
                 </button>
               </>
             )}
           </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="btn btn-sm btn-circle"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden absolute top-16 left-0 right-0 bg-base-100 border-b border-base-300 shadow-lg">
+            <div className="flex flex-col p-4 space-y-2">
+              <Link
+                to={"/settings"}
+                className="btn btn-sm gap-2 justify-start"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Settings className="w-4 h-4" />
+                <span>Settings</span>
+              </Link>
+
+              {authUser && (
+                <>
+                  <Link 
+                    to={"/profile"} 
+                    className="btn btn-sm gap-2 justify-start"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <User className="size-5" />
+                    <span>Profile</span>
+                  </Link>
+
+                  <button 
+                    className="btn btn-sm gap-2 justify-start" 
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogOut className="size-5" />
+                    <span>Logout</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

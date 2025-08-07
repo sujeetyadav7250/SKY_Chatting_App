@@ -28,6 +28,39 @@ io.on("connection", (socket) => {
 
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
+  // Handle call signaling
+  socket.on("joinCall", (callId) => {
+    socket.join(callId);
+    console.log(`User ${userId} joined call ${callId}`);
+  });
+
+  socket.on("leaveCall", (callId) => {
+    socket.leave(callId);
+    console.log(`User ${userId} left call ${callId}`);
+  });
+
+  // WebRTC signaling
+  socket.on("offer", (data) => {
+    socket.to(data.callId).emit("offer", {
+      offer: data.offer,
+      from: userId,
+    });
+  });
+
+  socket.on("answer", (data) => {
+    socket.to(data.callId).emit("answer", {
+      answer: data.answer,
+      from: userId,
+    });
+  });
+
+  socket.on("iceCandidate", (data) => {
+    socket.to(data.callId).emit("iceCandidate", {
+      candidate: data.candidate,
+      from: userId,
+    });
+  });
+
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.id);
     delete userSocketMap[userId];
