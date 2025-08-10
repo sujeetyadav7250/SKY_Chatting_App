@@ -25,7 +25,7 @@ app.use(cookieParser());
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5175",
-  "https://chatting-app-hqp7.onrender.com",
+  "https://sky-chatting-app.onrender.com",
 ];
 
 app.use(
