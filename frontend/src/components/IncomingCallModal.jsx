@@ -2,7 +2,7 @@ import { Phone, PhoneOff, User } from "lucide-react";
 import { useCallStore } from "../store/useCallStore";
 
 const IncomingCallModal = () => {
-  const { incomingCall, answerCall, declineCall } = useCallStore();
+  const { incomingCall, answerCall, declineCall, forceCleanupCalls } = useCallStore();
 
   if (!incomingCall) return null;
 
@@ -19,6 +19,15 @@ const IncomingCallModal = () => {
       await declineCall(incomingCall.callId);
     } catch (error) {
       console.error("Failed to decline call:", error);
+    }
+  };
+
+  const handleCleanup = async () => {
+    try {
+      await forceCleanupCalls();
+      // The modal will close automatically when incomingCall is cleared
+    } catch (error) {
+      console.error("Failed to cleanup calls:", error);
     }
   };
 
@@ -48,11 +57,11 @@ const IncomingCallModal = () => {
           {/* Caller Info */}
           <div>
             <h3 className="text-lg font-semibold">{incomingCall.caller.fullName}</h3>
-            <p className="text-base-content/60">Incoming call...</p>
+            <p className="text-base-content/60">Incoming {incomingCall.type === 'video' ? 'video' : 'audio'} call...</p>
           </div>
 
-          {/* Call Actions */}
-          <div className="flex justify-center gap-4">
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-3">
             <button
               onClick={handleAnswer}
               className="btn btn-circle btn-success btn-lg"
@@ -60,13 +69,23 @@ const IncomingCallModal = () => {
             >
               <Phone className="w-6 h-6" />
             </button>
-            
             <button
               onClick={handleDecline}
               className="btn btn-circle btn-error btn-lg"
               title="Decline call"
             >
               <PhoneOff className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Cleanup Button for stuck calls */}
+          <div className="pt-2 border-t border-base-300">
+            <button
+              onClick={handleCleanup}
+              className="btn btn-warning btn-sm btn-outline"
+              title="Cleanup stuck calls if you're having issues"
+            >
+              Cleanup Stuck Calls
             </button>
           </div>
         </div>

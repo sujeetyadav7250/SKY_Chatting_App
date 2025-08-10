@@ -12,6 +12,11 @@ const callSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    type: {
+      type: String,
+      enum: ["audio", "video"],
+      default: "audio",
+    },
     status: {
       type: String,
       enum: ["ringing", "ongoing", "ended", "missed", "declined"],

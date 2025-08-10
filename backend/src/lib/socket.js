@@ -41,6 +41,7 @@ io.on("connection", (socket) => {
 
   // WebRTC signaling
   socket.on("offer", (data) => {
+    console.log(`User ${userId} sending offer for call ${data.callId}`);
     socket.to(data.callId).emit("offer", {
       offer: data.offer,
       from: userId,
@@ -48,6 +49,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("answer", (data) => {
+    console.log(`User ${userId} sending answer for call ${data.callId}`);
     socket.to(data.callId).emit("answer", {
       answer: data.answer,
       from: userId,
@@ -55,10 +57,16 @@ io.on("connection", (socket) => {
   });
 
   socket.on("iceCandidate", (data) => {
+    console.log(`User ${userId} sending ICE candidate for call ${data.callId}`);
     socket.to(data.callId).emit("iceCandidate", {
       candidate: data.candidate,
       from: userId,
     });
+  });
+
+  // optional: allow renegotiation triggers in case of adding video later
+  socket.on('renegotiate', (data) => {
+    socket.to(data.callId).emit('renegotiate', { from: userId });
   });
 
   socket.on("disconnect", () => {

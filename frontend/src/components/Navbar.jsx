@@ -1,11 +1,39 @@
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { LogOut, MessageSquare, Settings, User, Menu, X } from "lucide-react";
+import { useCallStore } from "../store/useCallStore";
+import { LogOut, MessageSquare, Settings, User, Menu, X, PhoneOff } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 const Navbar = () => {
   const { logout, authUser } = useAuthStore();
+  const { forceCleanupCalls, checkCurrentCallStatus } = useCallStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
+
+  const handleCleanup = async () => {
+    try {
+      setIsCleaningUp(true);
+      toast.info("Cleaning up stuck calls...");
+      
+      // First check current status
+      await checkCurrentCallStatus();
+      
+      // Then force cleanup
+      const result = await forceCleanupCalls();
+      
+      if (result && result.cleanedCount > 0) {
+        toast.success(`Successfully cleaned up ${result.cleanedCount} stuck call(s)`);
+      } else {
+        toast.info("No stuck calls found to cleanup");
+      }
+    } catch (error) {
+      console.error("Cleanup failed:", error);
+      toast.error("Failed to cleanup calls: " + error.message);
+    } finally {
+      setIsCleaningUp(false);
+    }
+  };
 
   return (
     <header
@@ -26,6 +54,18 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-2">
+            {authUser && (
+              <button
+                onClick={handleCleanup}
+                disabled={isCleaningUp}
+                className="btn btn-sm btn-warning btn-outline gap-2"
+                title="Cleanup stuck calls if you're having issues"
+              >
+                <PhoneOff className="w-4 h-4" />
+                <span>{isCleaningUp ? "Cleaning..." : "Cleanup Calls"}</span>
+              </button>
+            )}
+
             <Link
               to={"/settings"}
               className="btn btn-sm gap-2 transition-colors"
@@ -64,6 +104,18 @@ const Navbar = () => {
         {mobileMenuOpen && (
           <div className="md:hidden absolute top-16 left-0 right-0 bg-base-100 border-b border-base-300 shadow-lg">
             <div className="flex flex-col p-4 space-y-2">
+              {authUser && (
+                <button
+                  onClick={handleCleanup}
+                  disabled={isCleaningUp}
+                  className="btn btn-sm btn-warning btn-outline gap-2 justify-start"
+                  title="Cleanup stuck calls if you're having issues"
+                >
+                  <PhoneOff className="w-4 h-4" />
+                  <span>{isCleaningUp ? "Cleaning..." : "Cleanup Calls"}</span>
+                </button>
+              )}
+
               <Link
                 to={"/settings"}
                 className="btn btn-sm gap-2 justify-start"
@@ -103,4 +155,5 @@ const Navbar = () => {
     </header>
   );
 };
+
 export default Navbar;

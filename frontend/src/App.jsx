@@ -16,11 +16,19 @@ import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import IncomingCallModal from "./components/IncomingCallModal";
 import CallInterface from "./components/CallInterface";
+import VideoCallInterface from "./components/VideoCallInterface";
 
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
   const { theme } = useThemeStore();
-  const { subscribeToCallEvents, unsubscribeFromCallEvents } = useCallStore();
+  const { 
+    subscribeToCallEvents, 
+    unsubscribeFromCallEvents, 
+    checkCurrentCallStatus, 
+    forceCleanupCalls,
+    startPeriodicCleanup,
+    stopPeriodicCleanup
+  } = useCallStore();
 
   console.log({ onlineUsers });
 
@@ -32,11 +40,53 @@ const App = () => {
     if (authUser) {
       subscribeToCallEvents();
       
+      // Check for stuck calls on app start
+      const checkStuckCalls = async () => {
+        try {
+          await checkCurrentCallStatus();
+          // If there are stuck calls, try to cleanup
+          if (useCallStore.getState().currentCall || 
+              useCallStore.getState().isInCall || 
+              useCallStore.getState().isCalling || 
+              useCallStore.getState().isRinging) {
+            console.log("Found stuck call state on app start, cleaning up...");
+            await forceCleanupCalls();
+          }
+        } catch (error) {
+          console.warn("Failed to check stuck calls on app start:", error);
+        }
+      };
+      
+      checkStuckCalls();
+      
+      // Start periodic cleanup
+      const cleanupInterval = startPeriodicCleanup();
+      
+      // Add beforeunload event listener to cleanup calls when leaving
+      const handleBeforeUnload = async (event) => {
+        try {
+          // Try to cleanup any active calls
+          if (useCallStore.getState().currentCall || 
+              useCallStore.getState().isInCall || 
+              useCallStore.getState().isCalling || 
+              useCallStore.getState().isRinging) {
+            console.log("Cleaning up calls before page unload...");
+            await forceCleanupCalls();
+          }
+        } catch (error) {
+          console.warn("Failed to cleanup calls on page unload:", error);
+        }
+      };
+      
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      
       return () => {
         unsubscribeFromCallEvents();
+        stopPeriodicCleanup(cleanupInterval);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
       };
     }
-  }, [authUser, subscribeToCallEvents, unsubscribeFromCallEvents]);
+  }, [authUser, subscribeToCallEvents, unsubscribeFromCallEvents, checkCurrentCallStatus, forceCleanupCalls, startPeriodicCleanup, stopPeriodicCleanup]);
 
   console.log({ authUser });
 
@@ -62,6 +112,7 @@ const App = () => {
       {/* Call Components */}
       <IncomingCallModal />
       <CallInterface />
+      <VideoCallInterface />
 
       <Toaster 
         position="top-center"
